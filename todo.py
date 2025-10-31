@@ -14,7 +14,8 @@ stats = {1: False, 2: True}
 """
 
 # TODO: create two empty dictionaries called 'tasks' and 'stats'
-
+tasks = {}
+stats = {}
 
 def create_task(description):
     """
@@ -33,7 +34,17 @@ def create_task(description):
     """
 
     # TODO: complete the code
+ if len(tasks) == 0:
+        new_id = 1
+    else:
+        # Otherwise, get the max key and add 1
+        new_id = max(tasks.keys()) + 1
 
+    # Add to both dictionaries
+    tasks[new_id] = description
+    stats[new_id] = False  # new task starts as not completed
+
+    return new_id
 
 def show_tasks():
     """
@@ -52,7 +63,28 @@ def show_tasks():
     print("\n=== Your Todo List ===")
 
     # TODO: complete the code
+# If there are no tasks at all
+    if len(tasks) == 0:
+        print("No tasks yet!")
+        return
 
+    # Track if we printed anything
+    printed_any = False
+
+    # Loop through all task IDs in increasing order
+    for tid in sorted(tasks.keys()):
+        # Skip completed tasks
+        if stats.get(tid, False) is True:
+            continue
+
+        # We only print tasks that are not completed
+        status_text = "completed" if stats[tid] else "not completed"
+        print(f"{tid}: {tasks[tid]} - {status_text}")
+        printed_any = True
+
+    # If everything was completed, nothing printed above
+    if not printed_any:
+        print("No incompleted tasks! Great job!")
 
 def complete_task(tid):
     """
@@ -66,7 +98,12 @@ def complete_task(tid):
     """
 
     # TODO: complete the code
-
+# Check if the task id exists
+    if tid in stats:
+        stats[tid] = True
+        return True
+    else:
+        return False
 
 def delete_task(tid):
     """
@@ -79,7 +116,12 @@ def delete_task(tid):
     """
 
     # TODO: complete the code
-
+     if tid in tasks and tid in stats:
+        del tasks[tid]
+        del stats[tid]
+        return True
+    else:
+        return False
 
 def main():
     """
@@ -118,6 +160,55 @@ def main():
         print("5. Exit")
 
         # TODO: complete the code
+       choice = input("Choose an option (1-5): ").strip()
+
+        if choice == "1":
+            # Show tasks
+            show_tasks()
+
+        elif choice == "2":
+            # Add task
+            task_name = input("Enter task description: ").strip()
+            if task_name == "":
+                print("Task description cannot be empty.")
+            else:
+                new_id = create_task(task_name)
+                print(f"Added task {new_id}: {task_name}")
+
+        elif choice == "3":
+            # Complete task
+            try:
+                tid = int(input("Enter task id to complete: ").strip())
+            except ValueError:
+                print("Invalid task id (must be a number).")
+                continue
+
+            changed = complete_task(tid)
+            if changed:
+                print(f"Task #{tid} marked as completed!")
+            else:
+                print("Invalid task id")
+
+        elif choice == "4":
+            # Delete task
+            try:
+                tid = int(input("Enter task id to delete: ").strip())
+            except ValueError:
+                print("Invalid task id (must be a number).")
+                continue
+
+            removed = delete_task(tid)
+            if removed:
+                print(f"Task #{tid} deleted")
+            else:
+                print("Invalid task id")
+
+        elif choice == "5":
+            print("Goodbye!")
+            break
+
+        else:
+            print("Invalid choice.")
 
 
 if __name__ == "__main__":
