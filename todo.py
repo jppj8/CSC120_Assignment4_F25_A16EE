@@ -17,6 +17,7 @@ stats = {1: False, 2: True}
 tasks = {}
 stats = {}
 
+
 def create_task(description):
     """
     Function create_task is used to add a new task into the application.
@@ -33,8 +34,8 @@ def create_task(description):
     @return [int] id of the newly added tasks
     """
 
-    # TODO: complete the code
- if len(tasks) == 0:
+    # If there are no tasks yet, start IDs at 1
+    if len(tasks) == 0:
         new_id = 1
     else:
         # Otherwise, get the max key and add 1
@@ -45,6 +46,7 @@ def create_task(description):
     stats[new_id] = False  # new task starts as not completed
 
     return new_id
+
 
 def show_tasks():
     """
@@ -62,8 +64,7 @@ def show_tasks():
 
     print("\n=== Your Todo List ===")
 
-    # TODO: complete the code
-# If there are no tasks at all
+    # If there are no tasks at all
     if len(tasks) == 0:
         print("No tasks yet!")
         return
@@ -86,24 +87,25 @@ def show_tasks():
     if not printed_any:
         print("No incompleted tasks! Great job!")
 
+
 def complete_task(tid):
     """
     Function complete_task() change the task status from False to True.
     If the task id can be found in dictionary 'stats', change the value of the
-    specific key from True to False.
+    specific key from False to True.
 
     @param [id] tid: id of the task
 
     @return [bool] True if changed, False otherwise
     """
 
-    # TODO: complete the code
-# Check if the task id exists
+    # Check if the task id exists
     if tid in stats:
         stats[tid] = True
         return True
     else:
         return False
+
 
 def delete_task(tid):
     """
@@ -115,13 +117,14 @@ def delete_task(tid):
     @return [bool] True if changed, False otherwise
     """
 
-    # TODO: complete the code
-     if tid in tasks and tid in stats:
+    # Check if task exists
+    if tid in tasks and tid in stats:
         del tasks[tid]
         del stats[tid]
         return True
     else:
         return False
+
 
 def main():
     """
@@ -159,8 +162,7 @@ def main():
         print("4. Delete task")
         print("5. Exit")
 
-        # TODO: complete the code
-       choice = input("Choose an option (1-5): ").strip()
+        choice = input("Choose an option (1-5): ").strip()
 
         if choice == "1":
             # Show tasks
