@@ -13,7 +13,9 @@ tasks = {1: "Do homework", 2: "Clean room"}
 stats = {1: False, 2: True}
 """
 
-# TODO: create two empty dictionaries called 'tasks' and 'stats'
+# create two empty dictionaries called 'tasks' and 'stats'
+tasks = {}
+stats = {}
 
 
 def create_task(description):
@@ -31,8 +33,14 @@ def create_task(description):
 
     @return [int] id of the newly added tasks
     """
+    if len(tasks) == 0:
+        new_id = 1
+    else:
+        new_id = max(tasks.keys()) + 1
 
-    # TODO: complete the code
+    tasks[new_id] = description
+    stats[new_id] = False
+    return new_id
 
 
 def show_tasks():
@@ -51,7 +59,14 @@ def show_tasks():
 
     print("\n=== Your Todo List ===")
 
-    # TODO: complete the code
+    if len(tasks) == 0 or len(stats) == 0:
+        print("No tasks yet!")
+        return
+
+    for tid in sorted(tasks.keys()):
+        if stats[tid] is True:
+            continue
+        print(f"{tid}: {tasks[tid]} - {stats[tid]}")
 
 
 def complete_task(tid):
@@ -64,8 +79,10 @@ def complete_task(tid):
 
     @return [bool] True if changed, False otherwise
     """
-
-    # TODO: complete the code
+    if tid in stats:
+        stats[tid] = True
+        return True
+    return False
 
 
 def delete_task(tid):
@@ -77,8 +94,11 @@ def delete_task(tid):
 
     @return [bool] True if changed, False otherwise
     """
-
-    # TODO: complete the code
+    if tid in tasks and tid in stats:
+        del tasks[tid]
+        del stats[tid]
+        return True
+    return False
 
 
 def main():
@@ -88,26 +108,6 @@ def main():
     infinite while loop.
     For every iteration of the loop, we print the menus, and ask for user to
     enter the option.
-
-    If option is 1, call show_tasks().
-
-    If option is 2, ask for the name of the task, then call create_task(),
-    remember to pass the argument and accept the return of the function.
-    Then print "Added tasks {task_id}: {task_name}".
-
-    If option is 3, ask for the task id (integer), send it to complete_task().
-    The function returns boolean value, use variable to accept the return.
-    If the return is True, print "Task #{task_id} marked as completed!",
-    otherwise, print "Invalid task id".
-
-    If option is 4, ask for the task id (integer), send it to delete_task().
-    The function returns boolean value, use variable to accept the return.
-    If the return is True, print "Task #{task_id} deleted",
-    otherwise, print "Invalid task id".
-
-    If option i 5, print "Goodbye!" and quit the while loop
-
-    Otherwise, print "Invalid choice.".
     """
     while True:
         print("\n=== Todo Menu ===")
@@ -117,7 +117,48 @@ def main():
         print("4. Delete task")
         print("5. Exit")
 
-        # TODO: complete the code
+        option = input().strip()
+
+        if option == "1":
+            show_tasks()
+
+        elif option == "2":
+            task_name = input()
+            task_id = create_task(task_name)
+            print(f"Added tasks {task_id}: {task_name}")
+
+        elif option == "3":
+            try:
+                task_id = int(input())
+            except ValueError:
+                print("Invalid task id")
+                continue
+
+            changed = complete_task(task_id)
+            if changed:
+                print(f"Task #{task_id} marked as completed!")
+            else:
+                print("Invalid task id")
+
+        elif option == "4":
+            try:
+                task_id = int(input())
+            except ValueError:
+                print("Invalid task id")
+                continue
+
+            changed = delete_task(task_id)
+            if changed:
+                print(f"Task #{task_id} deleted")
+            else:
+                print("Invalid task id")
+
+        elif option == "5":
+            print("Goodbye!")
+            break
+
+        else:
+            print("Invalid choice.")
 
 
 if __name__ == "__main__":
