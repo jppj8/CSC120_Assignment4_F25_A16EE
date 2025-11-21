@@ -1,104 +1,136 @@
-"""
-todo.py
-
-A simple todo list module used for Lab Assignment 12.
-Global state:
-    tasks: dict[int, str]  -> task id to task description
-    stats: dict[int, bool] -> task id to completion status (False = incomplete)
-"""
-
-tasks = {}
-stats = {}
-_next_id = 1  # internal counter for unique task IDs
+import unittest
+from io import StringIO
+from unittest.mock import patch
+import todo
 
 
-def create_task(description: str) -> int:
-    """
-    Create a new task with a unique id, mark it incomplete, and return the id.
-    """
-    global _next_id
-    tid = _next_id
-    _next_id += 1
+class TestTodoState(unittest.TestCase):
+    def setUp(self):
+        todo.tasks.clear()
+        todo.stats.clear()
 
-    tasks[tid] = description
-    stats[tid] = False
-    return tid
+    # ---------- create_task ----------
+    def test_create_single_task(self):
+        tid = todo.create_task("Read book")
+        self.assertEqual(tid, 1)
+        self.assertIn(tid, todo.tasks)
+        self.assertFalse(todo.stats[tid])
 
+    def test_create_multiple_tasks_id_increment(self):
+        t1 = todo.create_task("Task 1")
+        t2 = todo.create_task("Task 2")
+        t3 = todo.create_task("Task 3")
+        self.assertEqual(t2, t1 + 1)
+        self.assertEqual(t3, t2 + 1)
+        self.assertEqual(len(todo.tasks), 3)
 
-def show_tasks():
-    """
-    Print only incomplete tasks.
-    """
-    print("=== Your Todo List ===")
-    for tid in sorted(tasks.keys()):
-        if not stats.get(tid, False):
-            print(f"{tid}. {tasks[tid]}")
+    # ---------- show_tasks ------------
+    def test_show_tasks_output(self):
+        t1 = todo.create_task("Task 1")
+        t2 = todo.create_task("Task 2")
+        t3 = todo.create_task("Task 3")
 
+        todo.complete_task(t2)
 
-def complete_task(tid: int) -> bool:
-    """
-    Mark a task complete.
-    Return False if task id doesn't exist, True otherwise.
-    """
-    if tid not in tasks or tid not in stats:
-        return False
-    stats[tid] = True
-    return True
+        with patch("sys.stdout", new_callable=lambda: StringIO()) as fake_out:
+            todo.show_tasks()
+            output = fake_out.getvalue()
 
+        self.assertIn("=== Your Todo List ===", output)
+        self.assertIn("Task 1", output)
+        self.assertIn("Task 3", output)
+        self.assertNotIn("Task 2", output)
 
-def delete_task(tid: int) -> bool:
-    """
-    Delete a task from both tasks and stats.
-    Return True if deletion happened, False if id not found.
-    """
-    if tid not in tasks or tid not in stats:
-        return False
-    del tasks[tid]
-    del stats[tid]
-    return True
+    # ---------- complete_task ----------
+    def test_complete_valid_task(self):
+        tid = todo.create_task("Task A")
+        result = todo.complete_task(tid)
+        self.assertTrue(result)
+        self.assertTrue(todo.stats[tid])
 
+    def test_complete_invalid_task(self):
+        result = todo.complete_task(999)
+        self.assertFalse(result)
 
-def main():
-    """
-    Simple menu loop.
-    Options expected by tests:
-        1 = Show tasks
-        2 = Add task
-        3 = Complete task
-        4 = Delete task
-        5 = Quit
-    """
-    while True:
-        choice = input().strip()
+    def test_complete_task_already_completed(self):
+        tid = todo.create_task("Task B")
+        todo.complete_task(tid)
+        result = todo.complete_task(tid)
+        self.assertTrue(result)
+        self.assertTrue(todo.stats[tid])
 
-        if choice == "1":
-            show_tasks()
+    # ---------- delete_task ----------
+    def test_delete_valid_task(self):
+        tid = todo.create_task("Task C")
+        result = todo.delete_task(tid)
+        self.assertTrue(result)
+        self.assertNotIn(tid, todo.tasks)
+        self.assertNotIn(tid, todo.stats)
 
-        elif choice == "2":
-            desc = input()
-            create_task(desc)
+    def test_delete_invalid_task(self):
+        result = todo.delete_task(42)
+        self.assertFalse(result)
 
-        elif choice == "3":
-            try:
-                tid = int(input())
-            except ValueError:
-                continue
-            complete_task(tid)
+    def test_delete_task_already_deleted(self):
+        tid = todo.create_task("Task D")
+        todo.delete_task(tid)
+        result = todo.delete_task(tid)
+        self.assertFalse(result)
 
-        elif choice == "4":
-            try:
-                tid = int(input())
-            except ValueError:
-                continue
-            delete_task(tid)
+    # ---------- main menu: add & show ----------
+    def test_main_add_and_show(self):
+        inputs = ["2", "Task 1", "2", "Task 2", "1", "5"]
+        with patch("builtins.input", side_effect=inputs):
+            todo.main()
 
-        elif choice == "5":
-            break
+        self.assertIn(1, todo.tasks)
+        self.assertIn(2, todo.tasks)
+        self.assertEqual(todo.tasks[1], "Task 1")
+        self.assertEqual(todo.tasks[2], "Task 2")
+        self.assertFalse(todo.stats[1])
+        self.assertFalse(todo.stats[2])
 
-        else:
-            # invalid option, just loop again
-            continue
+        incomplete_tasks = [tid for tid, done in todo.stats.items() if not done]
+        self.assertListEqual(incomplete_tasks, [1, 2])
+
+    # ---------- main menu: complete & delete ----------
+    def test_main_complete_and_delete(self):
+        inputs = [
+            "2",
+            "Task 1",
+            "2",
+            "Task 2",
+            "3",
+            "1",
+            "4",
+            "2",
+            "1",
+            "5",
+        ]
+        with patch("builtins.input", side_effect=inputs):
+            todo.main()
+
+        self.assertIn(1, todo.tasks)
+        self.assertTrue(todo.stats[1])
+
+        self.assertNotIn(2, todo.tasks)
+        self.assertNotIn(2, todo.stats)
+
+        incomplete_tasks = [tid for tid, done in todo.stats.items() if not done]
+        self.assertListEqual(incomplete_tasks, [])
+
+    # ---------- edge cases ----------
+    def test_task_ids_after_deletion(self):
+        t1 = todo.create_task("A")
+        t2 = todo.create_task("B")
+        todo.delete_task(t1)
+        t3 = todo.create_task("C")
+        self.assertEqual(t3, max(todo.tasks.keys()))
+
+    def test_no_duplicate_task_ids(self):
+        ids = [todo.create_task(f"Task {i}") for i in range(5)]
+        self.assertEqual(len(ids), len(set(ids)))
 
 
 if __name__ == "__main__":
-    main()
+    unittest.main()
